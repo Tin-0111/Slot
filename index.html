@@ -28,6 +28,8 @@
       display: flex;
       justify-content: center;
       align-items: center;
+      opacity: 0;
+      transition: opacity 0.3s ease-in;
     }
     input, button {
       padding: 10px;
@@ -52,38 +54,48 @@
   <div id="payout"></div>
 
   <script>
-    const symbols = ['🍒', '🍋', '🍊', '🔔', '⭐', '7️⃣', '💎'];
+    const symbols = ['🟥', '🟨', '🟩', '🟦', '🟪', '⬛️', '⬜️'];
 
     function getRandomSymbol() {
       return symbols[Math.floor(Math.random() * symbols.length)];
     }
 
-    function spin() {
+    async function spin() {
       const bet = parseInt(document.getElementById("betAmount").value);
       if (!bet || bet <= 0) {
         alert("베팅 금액을 올바르게 입력하세요.");
         return;
       }
 
-      const grid = [];
       const slotGrid = document.getElementById("slotGrid");
       slotGrid.innerHTML = "";
 
-      // 6줄 x 5행 = 30칸
+      // 빈 셀 생성
+      const cells = [];
       for (let row = 0; row < 5; row++) {
-        grid[row] = [];
+        cells[row] = [];
         for (let col = 0; col < 6; col++) {
-          const symbol = getRandomSymbol();
-          grid[row][col] = symbol;
-
           const cell = document.createElement("div");
           cell.className = "slot-cell";
-          cell.textContent = symbol;
           slotGrid.appendChild(cell);
+          cells[row][col] = cell;
         }
       }
 
-      // 결과 평가
+      const grid = Array.from({ length: 5 }, () => Array(6).fill(null));
+
+      // 왼쪽부터, 아래→위 순서로 공개
+      for (let col = 0; col < 6; col++) {
+        for (let row = 4; row >= 0; row--) {
+          await new Promise(resolve => setTimeout(resolve, 60)); // 모션 간격
+          const symbol = getRandomSymbol();
+          cells[row][col].textContent = symbol;
+          cells[row][col].style.opacity = 1;
+          grid[row][col] = symbol;
+        }
+      }
+
+      // 결과 판단
       let payout = 0;
       let matches = [];
 
@@ -100,7 +112,7 @@
         if (streak >= 3) matches.push({ row, count: streak });
       }
 
-      // 배당 계산
+      // 보상 계산
       matches.forEach(match => {
         if (match.count === 3) payout += bet * 2;
         else if (match.count === 4) payout += bet * 5;
