@@ -11,7 +11,10 @@
       text-align: center;
       padding: 20px;
     }
-    h1 { font-size: 36px; margin-bottom: 10px; }
+    h1 {
+      font-size: 36px;
+      margin-bottom: 10px;
+    }
     .slot-grid {
       display: grid;
       grid-template-columns: repeat(6, 80px);
@@ -29,7 +32,10 @@
       justify-content: center;
       align-items: center;
       opacity: 0;
-      transition: opacity 0.3s ease-in;
+      transition: opacity 0.2s ease-in, border 0.2s ease-in;
+    }
+    .highlight {
+      border: 2px solid yellow !important;
     }
     input, button {
       padding: 10px;
@@ -38,8 +44,15 @@
       border-radius: 8px;
       border: none;
     }
-    button { background-color: #f39c12; color: white; cursor: pointer; }
-    #result, #payout { margin-top: 20px; font-size: 20px; }
+    button {
+      background-color: #f39c12;
+      color: white;
+      cursor: pointer;
+    }
+    #result, #payout {
+      margin-top: 20px;
+      font-size: 20px;
+    }
   </style>
 </head>
 <body>
@@ -69,6 +82,8 @@
 
       const slotGrid = document.getElementById("slotGrid");
       slotGrid.innerHTML = "";
+      document.getElementById("result").textContent = "";
+      document.getElementById("payout").textContent = "";
 
       // 빈 셀 생성
       const cells = [];
@@ -84,10 +99,10 @@
 
       const grid = Array.from({ length: 5 }, () => Array(6).fill(null));
 
-      // 왼쪽부터, 아래→위 순서로 공개
+      // 왼쪽부터, 아래→위 순서로 심볼 등장
       for (let col = 0; col < 6; col++) {
         for (let row = 4; row >= 0; row--) {
-          await new Promise(resolve => setTimeout(resolve, 60)); // 모션 간격
+          await new Promise(resolve => setTimeout(resolve, 30)); // 빠른 속도
           const symbol = getRandomSymbol();
           cells[row][col].textContent = symbol;
           cells[row][col].style.opacity = 1;
@@ -95,7 +110,9 @@
         }
       }
 
-      // 결과 판단
+      // 모든 심볼 표시 후 당첨 평가
+      await new Promise(resolve => setTimeout(resolve, 200)); // 딜레이 후 결과
+
       let payout = 0;
       let matches = [];
 
@@ -105,15 +122,18 @@
           if (grid[row][col] === grid[row][col - 1]) {
             streak++;
           } else {
-            if (streak >= 3) matches.push({ row, count: streak });
+            if (streak >= 3) matches.push({ row, start: col - streak, count: streak });
             streak = 1;
           }
         }
-        if (streak >= 3) matches.push({ row, count: streak });
+        if (streak >= 3) matches.push({ row, start: 6 - streak, count: streak });
       }
 
-      // 보상 계산
+      // 하이라이트 & 보상 계산
       matches.forEach(match => {
+        for (let i = 0; i < match.count; i++) {
+          cells[match.row][match.start + i].classList.add("highlight");
+        }
         if (match.count === 3) payout += bet * 2;
         else if (match.count === 4) payout += bet * 5;
         else if (match.count >= 5) payout += bet * 10;
